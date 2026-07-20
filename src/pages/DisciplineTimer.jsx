@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../i18n/index.jsx'
 
 // === 核心设定 ===
-// 学习：计时 × 100 倍膨胀（你看起来在拼命，实际上在摸鱼）
+// 学习：计时 × 1000 倍膨胀（你看起来在拼命，实际上在摸鱼）
 // 休息：正常 1× 计时（残忍的真相）
 const PHASE = { IDLE: 'idle', STUDY: 'study', REST: 'rest', PAUSED: 'paused' }
-const STUDY_MULTIPLIER = 100
+const STUDY_MULTIPLIER = 1000
 const STORAGE_KEY = 'ut-discipline'
 
 function loadStats() {
