@@ -49,6 +49,10 @@ export default function DisciplineTimer() {
 
   const rafRef = useRef(0)
   const lastTickRef = useRef(0)
+  // 会话起点：用「时间戳快照法」而非逐帧累加。
+  // 这样即使标签页失焦/浏览器降频到 1fps，回到前台一算就能追上真实流逝，
+  // 倍率永远精确（学习就是铁打的 100 倍），丢帧不丢时间。
+  const sessionStartRef = useRef(0)
 
   // 持久化累计数据，刷新页面也不丢（自律数据，必须存档）
   useEffect(() => {
@@ -59,10 +63,9 @@ export default function DisciplineTimer() {
     }
   }, [stats])
 
-  // rAF 主循环：按当前阶段以不同速率累加
+  // rAF 主循环：基于起点的绝对快照，抗降频/失焦
   useEffect(() => {
     if (phase !== PHASE.STUDY && phase !== PHASE.REST) return
-
     lastTickRef.current = performance.now()
 
     const loop = (now) => {
@@ -70,17 +73,16 @@ export default function DisciplineTimer() {
       lastTickRef.current = now
 
       if (phase === PHASE.STUDY) {
-        // 100 倍膨胀：你「赚」到的虚拟学习时间 + 真实流逝
-        const gain = delta * STUDY_MULTIPLIER
-        setSessionMs((v) => v + gain)
+        // 快照：当前显示 = (now - 起点) × 100，精确到毫秒的 100 倍
+        setSessionMs((now - sessionStartRef.current) * STUDY_MULTIPLIER)
         setStats((s) => ({
           ...s,
           studyRealMs: s.studyRealMs + delta,
-          studyVirtualMs: s.studyVirtualMs + gain,
+          studyVirtualMs: s.studyVirtualMs + delta * STUDY_MULTIPLIER,
         }))
       } else if (phase === PHASE.REST) {
-        // 休息正常走，不膨胀
-        setSessionMs((v) => v + delta)
+        // 休息 1×：正常真实流逝
+        setSessionMs(now - sessionStartRef.current)
         setStats((s) => ({ ...s, restMs: s.restMs + delta }))
       }
 
@@ -93,11 +95,13 @@ export default function DisciplineTimer() {
 
   const startStudy = () => {
     setSessionMs(0)
+    sessionStartRef.current = performance.now()
     setPausedFrom(null)
     setPhase(PHASE.STUDY)
   }
   const startRest = () => {
     setSessionMs(0)
+    sessionStartRef.current = performance.now()
     setPausedFrom(null)
     setPhase(PHASE.REST)
   }
@@ -106,7 +110,14 @@ export default function DisciplineTimer() {
     setPhase(PHASE.PAUSED)
   }
   const resume = () => {
-    if (pausedFrom) setPhase(pausedFrom)
+    if (!pausedFrom) return
+    // 校准起点：让快照从当前 sessionMs 继续递增，而不是归零
+    if (pausedFrom === PHASE.STUDY) {
+      sessionStartRef.current = performance.now() - sessionMs / STUDY_MULTIPLIER
+    } else {
+      sessionStartRef.current = performance.now() - sessionMs
+    }
+    setPhase(pausedFrom)
   }
   const stop = () => {
     setPhase(PHASE.IDLE)
@@ -161,9 +172,12 @@ export default function DisciplineTimer() {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="relative z-10 flex min-h-[100svh] flex-col px-6 pb-8 pt-[4.5rem] md:min-h-0 md:flex-1 md:px-14 md:pt-14"
-        >
-          {/* 顶部栏 */}
-          <div className="mb-2 flex items-center gap-3">
+          >
+            {/* 学习时的超光速放射线：时光飞速快进的模糊感 */}
+            <SpeedLines active={phase === PHASE.STUDY} />
+
+            {/* 顶部栏 */}
+            <div className="mb-2 flex items-center gap-3">
             <button
               onClick={() => navigate('/')}
               className="font-mono text-[11px] tracking-widest text-zinc-500 transition hover:text-zinc-200"
@@ -261,7 +275,9 @@ export default function DisciplineTimer() {
                   key={phase + '-time'}
                   initial={{ opacity: 0.5, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="font-display text-[clamp(2rem,7vw,3.5rem)] font-bold leading-none tracking-tight tabular-nums"
+                  className={`font-display text-[clamp(2rem,7vw,3.5rem)] font-bold leading-none tracking-tight tabular-nums ${
+                    phase === PHASE.STUDY ? 'timer-hyperspeed' : ''
+                  }`}
                   style={{ color: phase === PHASE.IDLE ? '#a1a1aa' : '#fff' }}
                 >
                   {formatHMS(sessionMs)}
@@ -269,20 +285,6 @@ export default function DisciplineTimer() {
                 <div className="mt-2 font-mono text-[10px] tracking-widest text-zinc-500">
                   {t('disc.currentSession')}
                 </div>
-                {/* 速率徽章 */}
-                <motion.div
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-mono text-[10px] tracking-widest"
-                  style={{
-                    borderColor: `${accentHex}55`,
-                    color: accentHex,
-                    backgroundColor: `${accentHex}11`,
-                  }}
-                  animate={isRunning ? { scale: [1, 1.04, 1] } : {}}
-                  transition={{ duration: 1.4, repeat: Infinity }}
-                >
-                  {isStudy ? `× ${STUDY_MULTIPLIER}` : isRest ? '× 1' : '× 0'}
-                  <span className="text-zinc-500">{t('disc.speed')}</span>
-                </motion.div>
               </div>
             </div>
 
@@ -315,7 +317,6 @@ export default function DisciplineTimer() {
                 }`}
               >
                 <span>{t('disc.startStudy')}</span>
-                <span className="font-mono text-[10px] tracking-widest opacity-70">×100</span>
                 {phase !== PHASE.STUDY && (
                   <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                 )}
@@ -334,7 +335,6 @@ export default function DisciplineTimer() {
                 }`}
               >
                 <span>{t('disc.startRest')}</span>
-                <span className="font-mono text-[10px] tracking-widest opacity-70">×1</span>
               </motion.button>
             </div>
 
@@ -455,3 +455,79 @@ function StatCell({ label, value, color, tip }) {
 
 // 24 个刻度（每 15° 一个）
 const TICKS = Array.from({ length: 24 }, (_, i) => i * 15)
+
+// 学习阶段的超光速放射线 + 时光模糊抖动样式
+// conic-gradient 做放射状光线，radial-mask 让中心镂空，scale+rotate 模拟向外冲射的超光速跳跃
+function SpeedLines({ active }) {
+  return (
+    <AnimatePresence>
+      {active && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.35 }}
+          className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
+        >
+          {/* 径向超光速光线层 */}
+          <div className="speed-rays absolute inset-0" />
+          {/* 反向旋转的第二层，增加纵深 */}
+          <div className="speed-rays-2 absolute inset-0" />
+          {/* 中心爆发光晕 */}
+          <div className="absolute left-1/2 top-1/2 h-40 w-40 -translate-x-1/2 -translate-y-1/2 rounded-full bg-acid/25 blur-3xl" />
+          <style>{`
+            .speed-rays {
+              background: repeating-conic-gradient(
+                from 0deg at 50% 50%,
+                transparent 0deg,
+                transparent 2.1deg,
+                rgba(212,255,58,0.12) 2.5deg,
+                rgba(212,255,58,0.38) 3deg,
+                rgba(212,255,58,0.12) 3.5deg,
+                transparent 3.9deg,
+                transparent 7deg
+              );
+              -webkit-mask: radial-gradient(circle at center, transparent 0%, transparent 6%, black 32%, black 72%, transparent 100%);
+              mask: radial-gradient(circle at center, transparent 0%, transparent 6%, black 32%, black 72%, transparent 100%);
+              transform-origin: center;
+              animation: speed-zoom 1.1s linear infinite;
+            }
+            .speed-rays-2 {
+              background: repeating-conic-gradient(
+                from 5deg at 50% 50%,
+                transparent 0deg,
+                transparent 4deg,
+                rgba(122,252,255,0.10) 4.4deg,
+                rgba(122,252,255,0.22) 4.8deg,
+                transparent 5.2deg,
+                transparent 11deg
+              );
+              -webkit-mask: radial-gradient(circle at center, transparent 0%, transparent 10%, black 40%, black 78%, transparent 100%);
+              mask: radial-gradient(circle at center, transparent 0%, transparent 10%, black 40%, black 78%, transparent 100%);
+              transform-origin: center;
+              animation: speed-zoom 1.6s linear infinite reverse;
+            }
+            @keyframes speed-zoom {
+              0% { transform: scale(0.4); opacity: 0.15; }
+              100% { transform: scale(1.9); opacity: 1; }
+            }
+            /* 数字时光模糊：微 blur + 酸性发光 + 高频抖动，模拟飞速翻滚看不清 */
+            .timer-hyperspeed {
+              filter: blur(0.6px);
+              text-shadow:
+                0 0 10px rgba(212,255,58,0.75),
+                0 0 22px rgba(212,255,58,0.4),
+                0 0 40px rgba(212,255,58,0.2);
+              animation: hyperspace-jitter 0.11s steps(2, end) infinite;
+            }
+            @keyframes hyperspace-jitter {
+              0%   { transform: translate(0, 0); }
+              50%  { transform: translate(-1px, 0.5px); }
+              100% { transform: translate(1px, -0.5px); }
+            }
+          `}</style>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  )
+}
