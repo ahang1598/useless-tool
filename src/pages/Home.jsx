@@ -2,12 +2,14 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useState, useRef } from 'react'
 import { useI18n } from '../i18n/index.jsx'
+import AiDetectOverlay from '../components/AiDetectOverlay.jsx'
 
 export default function Home() {
   const navigate = useNavigate()
   const { t } = useI18n()
   const btnRef = useRef(null)
   const [magnet, setMagnet] = useState({ x: 0, y: 0 })
+  const [aiOpen, setAiOpen] = useState(false)
 
   const handleMove = (e) => {
     const el = btnRef.current
@@ -103,6 +105,27 @@ export default function Home() {
               * {t('home.sideEffect').replace(/^\*\s*/, '')}
             </div>
           </motion.div>
+
+          {/* 次级按钮：AI 智能检测，幽灵样式保持主按钮层级 */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.4, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => setAiOpen(true)}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="group relative flex items-center gap-3 overflow-hidden rounded-full border border-white/15 bg-white/[0.03] px-6 py-4 text-zinc-200 backdrop-blur-sm md:px-7 md:py-5"
+          >
+            <span className="relative flex h-8 w-8 items-center justify-center md:h-10 md:w-10">
+              <span className="absolute inset-0 animate-pulse-glow rounded-full bg-frost/30 blur-md" />
+              <span className="relative font-mono text-xs font-bold md:text-sm">AI</span>
+            </span>
+            <div className="text-left">
+              <div className="font-display text-base font-bold leading-none md:text-lg">{t('aid.title1')}{t('aid.title2')}</div>
+              <div className="mt-1 font-mono text-[10px] tracking-widest text-zinc-500">{t('aid.mono')}</div>
+            </div>
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-frost/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          </motion.button>
         </div>
 
         <motion.div
@@ -112,7 +135,7 @@ export default function Home() {
           className="mt-12 grid grid-cols-3 gap-4 border-t border-white/5 pt-6 font-mono text-[10px] tracking-wider text-zinc-500 md:max-w-md"
         >
           <div>
-            <div className="text-zinc-200">1</div>
+            <div className="text-zinc-200">2</div>
             <div className="mt-1">{t('home.stats.tools')}</div>
           </div>
           <div>
@@ -125,6 +148,9 @@ export default function Home() {
           </div>
         </motion.div>
       </div>
+
+      {/* AI 智能检测弹窗 */}
+      <AiDetectOverlay open={aiOpen} onClose={() => setAiOpen(false)} />
     </div>
   )
 }

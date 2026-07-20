@@ -8,7 +8,6 @@ const PHASE = { IDLE: 'idle', TRAVELING: 'traveling', SUCCESS: 'success' }
 const MIN_MS = 5 * 1000
 const MAX_MS = 24 * 60 * 60 * 1000
 
-// 预设项（key 用于取 i18n）
 const PRESETS = [
   { key: 's5', ms: 5 * 1000 },
   { key: 's30', ms: 30 * 1000 },
@@ -26,7 +25,6 @@ export default function TimeMachine() {
   const navigate = useNavigate()
   const { t } = useI18n()
 
-  // 默认 5 秒
   const [phase, setPhase] = useState(PHASE.IDLE)
   const [duration, setDuration] = useState(5 * 1000)
   const [remain, setRemain] = useState(0)
@@ -36,7 +34,6 @@ export default function TimeMachine() {
   const timerRef = useRef(null)
   const logTimerRef = useRef(null)
 
-  // 对数滑块
   const minLog = Math.log(MIN_MS)
   const maxLog = Math.log(MAX_MS)
   const toSliderValue = (ms) => ((Math.log(ms) - minLog) / (maxLog - minLog)) * 1000
@@ -117,10 +114,13 @@ export default function TimeMachine() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="relative flex flex-1 flex-col px-6 pb-6 pt-[4.5rem] md:h-auto md:flex-row md:items-start md:justify-between md:gap-12 md:px-14 md:pt-14"
+            className="relative flex min-h-[100svh] flex-col px-6 pb-6 pt-[4.5rem] md:min-h-0 md:flex-1 md:flex-row md:items-start md:justify-between md:gap-12 md:px-14 md:pt-14"
           >
-            {/* 顶部：返回 + 代号（正常文档流，避免与标题重叠） */}
-            <div className="mb-5 flex items-center gap-3 md:absolute md:left-14 md:top-14 md:mb-0">
+            {/* 漂浮时间符号背景 */}
+            <FloatingSymbols />
+
+            {/* 顶部栏 */}
+            <div className="relative z-10 mb-4 flex items-center gap-3 md:absolute md:left-14 md:top-14 md:mb-0">
               <button
                 onClick={() => navigate('/')}
                 className="font-mono text-[11px] tracking-widest text-zinc-500 hover:text-zinc-200"
@@ -130,37 +130,66 @@ export default function TimeMachine() {
               <span className="font-mono text-[11px] tracking-[0.3em] text-acid">{t('tm.mono')}</span>
             </div>
 
-            <div className="mx-auto w-full max-w-2xl md:mx-0 md:mt-16">
+            {/* 中间核心区：撑满剩余空间，让按钮自然落底 */}
+            <div className="relative z-10 flex flex-1 flex-col justify-center md:mx-0 md:mt-12 md:block md:flex-none">
+              {/* 标题 */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="font-display text-[clamp(2.2rem,7vw,5rem)] font-bold leading-[0.95] tracking-tight md:text-[clamp(2.5rem,8vw,5rem)]"
+                className="font-display text-[clamp(2rem,6.5vw,5rem)] font-bold leading-[0.95] tracking-tight md:text-[clamp(2.5rem,8vw,5rem)]"
               >
                 {t('tm.title1')}
                 <br />
                 <span className="text-frost">{t('tm.title2')}</span>
               </motion.h1>
 
-              <p className="mt-3 max-w-md text-[13px] leading-relaxed text-zinc-400 md:mt-5 md:text-[15px]">
+              <p className="mt-2 max-w-md text-[12px] leading-relaxed text-zinc-400 md:mt-4 md:text-[15px]">
                 {t('tm.intro')}<span className="text-zinc-200">{t('tm.introHl')}</span>{t('tm.introEnd')}
               </p>
 
-              {/* 当前时长大显示 */}
-              <div className="mt-5 flex items-baseline gap-4 md:mt-10">
-                <motion.div
-                  key={duration}
-                  initial={{ opacity: 0.6, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="font-display text-4xl font-bold text-acid md:text-6xl"
-                >
-                  {formatDuration(duration)}
-                </motion.div>
-                <span className="font-mono text-xs tracking-widest text-zinc-500">{t('tm.target')}</span>
+              {/* 巨大时长仪式区：旋转刻度环 + 脉冲光圈 + 数字 */}
+              <div className="my-5 flex items-center justify-center md:my-8 md:justify-start">
+                <div className="relative flex h-40 w-40 items-center justify-center md:h-52 md:w-52">
+                  {/* 脉冲光圈 */}
+                  <div className="absolute inset-0 animate-pulse-glow rounded-full bg-frost/15 blur-2xl" />
+                  {/* 旋转刻度环 */}
+                  <svg className="absolute inset-0 animate-spin-slow" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="92" fill="none" stroke="rgba(212,255,58,0.15)" strokeWidth="1" />
+                    <circle cx="100" cy="100" r="92" fill="none" stroke="#d4ff3a" strokeWidth="2" strokeLinecap="round" strokeDasharray="8 580" />
+                    {TICKS.map((a, i) => (
+                      <line key={i} x1="100" y1="10" x2="100" y2={i % 5 === 0 ? '22' : '16'} stroke="rgba(255,255,255,0.25)" strokeWidth="1" transform={`rotate(${a} 100 100)`} />
+                    ))}
+                  </svg>
+                  {/* 反向内环 */}
+                  <svg className="absolute inset-4 animate-spin-rev" viewBox="0 0 200 200">
+                    <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(122,252,255,0.2)" strokeWidth="1" strokeDasharray="2 10" />
+                  </svg>
+                  {/* 中央数字 */}
+                  <motion.div
+                    key={duration}
+                    initial={{ opacity: 0.5, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative z-10 text-center"
+                  >
+                    <div className="font-display text-2xl font-bold leading-none text-acid md:text-4xl">
+                      {formatDuration(duration)}
+                    </div>
+                    <div className="mt-1 font-mono text-[9px] tracking-widest text-zinc-500">
+                      {t('tm.target')}
+                    </div>
+                  </motion.div>
+                </div>
               </div>
 
+              {/* 仪器状态条：跳动的假数据，增加沙雕沉浸感 */}
+              <StatusPanel />
+            </div>
+
+            {/* 底部交互区 */}
+            <div className="relative z-10 mt-4 md:mx-0 md:mt-8 md:max-w-md">
               {/* 对数滑块 */}
-              <div className="mt-5 md:mt-8">
+              <div>
                 <input
                   type="range"
                   min={0}
@@ -177,7 +206,7 @@ export default function TimeMachine() {
               </div>
 
               {/* 预设 */}
-              <div className="mt-5 flex flex-wrap gap-2 md:mt-8">
+              <div className="mt-4 flex flex-wrap gap-2 md:mt-6">
                 {PRESETS.map((p) => (
                   <button
                     key={p.key}
@@ -198,10 +227,11 @@ export default function TimeMachine() {
                 onClick={startTravel}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-frost px-8 py-4 text-void md:mt-12 md:w-auto md:py-5"
+                className="group relative mt-5 flex w-full items-center justify-center gap-3 overflow-hidden rounded-2xl bg-frost px-8 py-4 text-void md:mt-8 md:w-auto md:py-5"
               >
                 <span className="font-display text-base font-bold md:text-lg">{t('tm.launch')}</span>
                 <span className="font-mono text-xs tracking-widest text-void/60">{t('tm.launchMono')}</span>
+                <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/50 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
               </motion.button>
 
               <p className="mt-3 font-mono text-[10px] leading-relaxed text-zinc-600 md:mt-4">
@@ -359,6 +389,67 @@ export default function TimeMachine() {
   )
 }
 
+// 漂浮的时间符号背景
+function FloatingSymbols() {
+  const items = [
+    { s: '⏰', x: 8, y: 18, size: 1.8, d: 7 },
+    { s: '⌛', x: 82, y: 14, size: 2.2, d: 9 },
+    { s: '🌀', x: 14, y: 70, size: 2.6, d: 11 },
+    { s: '✨', x: 88, y: 60, size: 1.4, d: 6 },
+    { s: '⌖', x: 70, y: 82, size: 1.6, d: 8 },
+    { s: '⏳', x: 24, y: 44, size: 1.5, d: 10 },
+    { s: '∞', x: 60, y: 28, size: 2, d: 12 },
+    { s: '๑', x: 44, y: 88, size: 1.3, d: 7.5 },
+  ]
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      {items.map((it, i) => (
+        <motion.span
+          key={i}
+          className="absolute font-mono text-zinc-600/30 select-none"
+          style={{ left: `${it.x}%`, top: `${it.y}%`, fontSize: `${it.size}rem` }}
+          animate={{ y: [0, -18, 0], opacity: [0.15, 0.45, 0.15], rotate: [0, 8, 0] }}
+          transition={{ duration: it.d, repeat: Infinity, delay: i * 0.6, ease: 'easeInOut' }}
+        >
+          {it.s}
+        </motion.span>
+      ))}
+    </div>
+  )
+}
+
+// 仪器状态条：跳动的假数据
+function StatusPanel() {
+  const [, force] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => force((n) => n + 1), 1600)
+    return () => clearInterval(id)
+  }, [])
+  const rnd = (a, b) => a + Math.random() * (b - a)
+  const rows = [
+    { label: 'QUANTUM STABILITY', val: rnd(94, 99.8).toFixed(1) + '%', color: 'bg-acid', pct: rnd(88, 99) },
+    { label: 'ENTROPY RESERVE', val: rnd(40, 80).toFixed(0) + ' TB', color: 'bg-frost', pct: rnd(40, 80) },
+    { label: 'TIMELINE COherence', val: rnd(0.8, 1.2).toFixed(3) + ' τ', color: 'bg-plasma', pct: rnd(55, 95) },
+  ]
+  return (
+    <div className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3">
+      {rows.map((r) => (
+        <div key={r.label} className="flex items-center gap-3 py-1.5">
+          <div className="w-36 shrink-0 font-mono text-[9px] tracking-wider text-zinc-500">{r.label}</div>
+          <div className="h-1 flex-1 overflow-hidden rounded-full bg-white/10">
+            <motion.div
+              className={`h-full ${r.color}`}
+              animate={{ width: `${r.pct}%` }}
+              transition={{ duration: 1.2, ease: 'easeOut' }}
+            />
+          </div>
+          <div className="w-20 shrink-0 text-right font-mono text-[10px] text-zinc-300">{r.val}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Wormhole() {
   return (
     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -394,6 +485,9 @@ function Wormhole() {
     </div>
   )
 }
+
+// 刻度环的 12 个角度
+const TICKS = Array.from({ length: 24 }, (_, i) => i * 15)
 
 const STARS = Array.from({ length: 40 }, () => ({
   x: Math.random() * 100,
