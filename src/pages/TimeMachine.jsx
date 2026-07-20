@@ -117,10 +117,10 @@ export default function TimeMachine() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="relative flex flex-1 flex-col px-6 pb-10 pt-20 md:flex-row md:items-start md:justify-between md:gap-12 md:px-14 md:pt-14"
+            className="relative flex flex-1 flex-col px-6 pb-6 pt-[4.5rem] md:h-auto md:flex-row md:items-start md:justify-between md:gap-12 md:px-14 md:pt-14"
           >
             {/* 顶部：返回 + 代号（正常文档流，避免与标题重叠） */}
-            <div className="mb-8 flex items-center gap-3 md:absolute md:left-14 md:top-14 md:mb-0">
+            <div className="mb-5 flex items-center gap-3 md:absolute md:left-14 md:top-14 md:mb-0">
               <button
                 onClick={() => navigate('/')}
                 className="font-mono text-[11px] tracking-widest text-zinc-500 hover:text-zinc-200"
@@ -135,24 +135,24 @@ export default function TimeMachine() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6 }}
-                className="font-display text-[clamp(2.5rem,8vw,5rem)] font-bold leading-[0.92] tracking-tight"
+                className="font-display text-[clamp(2.2rem,7vw,5rem)] font-bold leading-[0.95] tracking-tight md:text-[clamp(2.5rem,8vw,5rem)]"
               >
                 {t('tm.title1')}
                 <br />
                 <span className="text-frost">{t('tm.title2')}</span>
               </motion.h1>
 
-              <p className="mt-5 max-w-md text-[15px] leading-relaxed text-zinc-400">
+              <p className="mt-3 max-w-md text-[13px] leading-relaxed text-zinc-400 md:mt-5 md:text-[15px]">
                 {t('tm.intro')}<span className="text-zinc-200">{t('tm.introHl')}</span>{t('tm.introEnd')}
               </p>
 
               {/* 当前时长大显示 */}
-              <div className="mt-10 flex items-baseline gap-4">
+              <div className="mt-5 flex items-baseline gap-4 md:mt-10">
                 <motion.div
                   key={duration}
                   initial={{ opacity: 0.6, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="font-display text-5xl font-bold text-acid md:text-6xl"
+                  className="font-display text-4xl font-bold text-acid md:text-6xl"
                 >
                   {formatDuration(duration)}
                 </motion.div>
@@ -160,7 +160,7 @@ export default function TimeMachine() {
               </div>
 
               {/* 对数滑块 */}
-              <div className="mt-8">
+              <div className="mt-5 md:mt-8">
                 <input
                   type="range"
                   min={0}
@@ -177,12 +177,12 @@ export default function TimeMachine() {
               </div>
 
               {/* 预设 */}
-              <div className="mt-8 flex flex-wrap gap-2">
+              <div className="mt-5 flex flex-wrap gap-2 md:mt-8">
                 {PRESETS.map((p) => (
                   <button
                     key={p.key}
                     onClick={() => setDuration(p.ms)}
-                    className={`rounded-full border px-4 py-2 text-xs transition ${
+                    className={`rounded-full border px-3 py-1.5 text-xs transition md:px-4 md:py-2 ${
                       duration === p.ms
                         ? 'border-acid bg-acid/10 text-acid'
                         : 'border-white/10 text-zinc-400 hover:border-white/30 hover:text-zinc-200'
@@ -198,13 +198,13 @@ export default function TimeMachine() {
                 onClick={startTravel}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className="group mt-12 flex w-full items-center justify-center gap-3 rounded-2xl bg-frost px-8 py-5 text-void md:w-auto"
+                className="group mt-6 flex w-full items-center justify-center gap-3 rounded-2xl bg-frost px-8 py-4 text-void md:mt-12 md:w-auto md:py-5"
               >
-                <span className="font-display text-lg font-bold">{t('tm.launch')}</span>
+                <span className="font-display text-base font-bold md:text-lg">{t('tm.launch')}</span>
                 <span className="font-mono text-xs tracking-widest text-void/60">{t('tm.launchMono')}</span>
               </motion.button>
 
-              <p className="mt-4 font-mono text-[10px] leading-relaxed text-zinc-600">
+              <p className="mt-3 font-mono text-[10px] leading-relaxed text-zinc-600 md:mt-4">
                 * {t('tm.note').replace(/^\*\s*/, '')}
               </p>
             </div>
