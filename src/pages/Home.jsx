@@ -135,7 +135,7 @@ export default function Home() {
           className="mt-12 grid grid-cols-3 gap-4 border-t border-white/5 pt-6 font-mono text-[10px] tracking-wider text-zinc-500 md:max-w-md"
         >
           <div>
-            <div className="text-zinc-200">2</div>
+            <div className="text-zinc-200">3</div>
             <div className="mt-1">{t('home.stats.tools')}</div>
           </div>
           <div>
