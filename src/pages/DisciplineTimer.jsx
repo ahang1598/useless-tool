@@ -64,22 +64,33 @@ export default function DisciplineTimer() {
   }, [stats])
 
   // rAF 主循环：基于起点的绝对快照，抗降频/失焦
+  // 关键：学习时 sessionMs = (now - 起点) × 100，所以 1 真实秒 = 100 虚拟秒
   useEffect(() => {
     if (phase !== PHASE.STUDY && phase !== PHASE.REST) return
-    lastTickRef.current = performance.now()
 
-    const loop = (now) => {
+    const loop = () => {
+      // 统一用 performance.now()，避免 rAF 回调 now 参数的时间源差异
+      const now = performance.now()
       const delta = now - lastTickRef.current
       lastTickRef.current = now
 
       if (phase === PHASE.STUDY) {
-        // 快照：当前显示 = (now - 起点) × 100，精确到毫秒的 100 倍
-        setSessionMs((now - sessionStartRef.current) * STUDY_MULTIPLIER)
+        // 快照法：当前显示 = 真实流逝 × 100，铁打的 100 倍
+        const virtual = (now - sessionStartRef.current) * STUDY_MULTIPLIER
+        setSessionMs(virtual)
         setStats((s) => ({
           ...s,
           studyRealMs: s.studyRealMs + delta,
           studyVirtualMs: s.studyVirtualMs + delta * STUDY_MULTIPLIER,
         }))
+        // 临时诊断日志（确认 100 倍生效后删除）
+        if (typeof window !== 'undefined' && window.__discDebug) {
+          console.log('[disc]', {
+            realMs: Math.round(now - sessionStartRef.current),
+            virtualMs: Math.round(virtual),
+            ratio: virtual / (now - sessionStartRef.current),
+          })
+        }
       } else if (phase === PHASE.REST) {
         // 休息 1×：正常真实流逝
         setSessionMs(now - sessionStartRef.current)
@@ -89,6 +100,7 @@ export default function DisciplineTimer() {
       rafRef.current = requestAnimationFrame(loop)
     }
 
+    lastTickRef.current = performance.now()
     rafRef.current = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(rafRef.current)
   }, [phase])
