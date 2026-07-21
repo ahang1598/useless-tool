@@ -35,8 +35,8 @@ export default function Home() {
         />
       </div>
 
-      {/* 主内容区 */}
-      <div className="relative z-10 flex flex-1 flex-col justify-between px-6 pb-10 pt-24 md:px-14 md:pt-14">
+      {/* 主内容区：PC 端水平垂直居中 */}
+      <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-1 flex-col justify-center px-6 pb-10 pt-24 md:items-center md:text-center md:pt-14">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -46,7 +46,7 @@ export default function Home() {
           {t('home.welcome')}
         </motion.div>
 
-        <div className="flex flex-col items-start">
+        <div className="flex flex-col items-start md:items-center">
           <motion.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
