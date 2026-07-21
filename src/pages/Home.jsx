@@ -147,6 +147,27 @@ export default function Home() {
             </div>
             <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-acid/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
           </motion.button>
+
+          {/* 赛博玄学馆入口 */}
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.6, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => navigate('/mystic')}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="group relative flex items-center gap-3 overflow-hidden rounded-full border border-aura/40 bg-aura/[0.06] px-6 py-4 text-zinc-100 backdrop-blur-sm md:px-7 md:py-5"
+          >
+            <span className="relative flex h-8 w-8 items-center justify-center md:h-10 md:w-10">
+              <span className="absolute inset-0 animate-pulse-glow rounded-full bg-aura/30 blur-md" />
+              <span className="relative font-mono text-sm md:text-base">🔮</span>
+            </span>
+            <div className="text-left">
+              <div className="font-display text-base font-bold leading-none md:text-lg">{t('mystic.hubTitle1')}{t('mystic.hubTitle2')}</div>
+              <div className="mt-1 font-mono text-[10px] tracking-widest text-aura/70">{t('mystic.mono')}</div>
+            </div>
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-aura/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          </motion.button>
           </div>
         </div>
 

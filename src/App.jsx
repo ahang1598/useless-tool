@@ -4,6 +4,7 @@ import Home from './pages/Home.jsx'
 import TimeMachine from './pages/TimeMachine.jsx'
 import DisciplineTimer from './pages/DisciplineTimer.jsx'
 import SwissArmyKnife from './pages/SwissArmyKnife.jsx'
+import Mystic from './pages/Mystic.jsx'
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/time-machine" element={<TimeMachine />} />
         <Route path="/discipline" element={<DisciplineTimer />} />
         <Route path="/swiss-army" element={<SwissArmyKnife />} />
+        <Route path="/mystic" element={<Mystic />} />
       </Route>
     </Routes>
   )
