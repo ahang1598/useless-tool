@@ -139,7 +139,7 @@ export default function Home() {
           >
             <span className="relative flex h-8 w-8 items-center justify-center md:h-10 md:w-10">
               <span className="absolute inset-0 animate-pulse-glow rounded-full bg-acid/30 blur-md" />
-              <span className="relative font-mono text-sm md:text-base">🪓</span>
+              <span className="relative font-mono text-sm md:text-base">💻</span>
             </span>
             <div className="text-left">
               <div className="font-display text-base font-bold leading-none md:text-lg">{t('swiss.title1')}{t('swiss.title2')}</div>

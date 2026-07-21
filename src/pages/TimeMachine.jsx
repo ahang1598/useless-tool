@@ -114,13 +114,13 @@ export default function TimeMachine() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="relative flex min-h-[100svh] flex-col px-6 pb-6 pt-[4.5rem] md:min-h-0 md:flex-1 md:flex-row md:items-start md:justify-between md:gap-12 md:px-14 md:pt-14"
+            className="relative flex min-h-[100svh] flex-col px-6 pb-6 pt-[4.5rem] md:min-h-0 md:flex-1 md:items-start md:gap-8 md:px-14 md:pt-20"
           >
             {/* 漂浮时间符号背景 */}
             <FloatingSymbols />
 
-            {/* 顶部栏 */}
-            <div className="relative z-10 mb-4 flex items-center gap-3 md:absolute md:left-14 md:top-14 md:mb-0">
+            {/* 顶部栏：统一流式，避免 absolute 脱离单列 */}
+            <div className="relative z-10 mb-2 flex items-center gap-3 md:mb-4">
               <button
                 onClick={() => navigate('/')}
                 className="font-mono text-[11px] tracking-widest text-zinc-500 hover:text-zinc-200"
@@ -130,8 +130,8 @@ export default function TimeMachine() {
               <span className="font-mono text-[11px] tracking-[0.3em] text-acid">{t('tm.mono')}</span>
             </div>
 
-            {/* 中间核心区：撑满剩余空间，让按钮自然落底 */}
-            <div className="relative z-10 flex flex-1 flex-col justify-center md:mx-0 md:mt-12 md:block md:flex-none">
+            {/* 核心内容区：始终单列堆叠 */}
+            <div className="relative z-10 flex flex-1 flex-col justify-center md:block md:flex-none">
               {/* 标题 */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
@@ -186,8 +186,8 @@ export default function TimeMachine() {
               <StatusPanel />
             </div>
 
-            {/* 底部交互区 */}
-            <div className="relative z-10 mt-4 md:mx-0 md:mt-8 md:max-w-md">
+            {/* 底部交互区：紧随核心区，单列堆叠 */}
+            <div className="relative z-10 mt-4 w-full md:mt-8 md:max-w-2xl">
               {/* 对数滑块 */}
               <div>
                 <input

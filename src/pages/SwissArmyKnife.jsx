@@ -1,8 +1,8 @@
-// === 赛博瑞士军刀 · 主舞台 ===
-// 闭合态：一枚冷锻金属徽章，呼吸光晕，"点击展开"
-// 展开态：20 片刀刃如折扇绽放，每片是一个整蛊玩具入口
+// === 赛博武器库 · 终端命令面板 ===
+// 进来直接看到所有武器（命令列表），顶部一段启动日志作为氛围装饰
+// 交互：↑↓ 导航 / Enter 触发 / 打字筛选 / Esc 退出 overlay，移动端触摸点击
 // 触发态：交给 ToolOverlay 全屏接管
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useI18n } from '../i18n/index.jsx'
@@ -12,27 +12,14 @@ import ToolOverlay from '../components/swiss/ToolOverlay.jsx'
 export default function SwissArmyKnife() {
   const navigate = useNavigate()
   const { t } = useI18n()
-  const [expanded, setExpanded] = useState(false)
   const [activeId, setActiveId] = useState(null)
 
-  // 预计算每片刀刃的角度：20 片均匀分布全圆，每片 18°，首片朝上（-90° 偏移）
-  const blades = useMemo(
-    () =>
-      TOOLS.map((tool, i) => ({
-        ...tool,
-        angle: i * (360 / TOOLS.length) - 90,
-        cat: CATEGORY[tool.cat],
-      })),
-    []
-  )
-
   return (
-    <div className="relative flex min-h-[100svh] flex-col overflow-hidden px-6 pb-8 pt-[4.5rem] md:px-14 md:pt-14">
-      {/* 背景光晕：随展开状态变色 */}
-      <BladeGlow expanded={expanded} />
+    <div className="relative flex min-h-[100svh] flex-col px-3 pb-6 pt-[4.5rem] md:px-14 md:pb-8 md:pt-14">
+      <BackgroundFX />
 
       {/* 顶部栏 */}
-      <div className="relative z-20 mb-2 flex items-center gap-3">
+      <div className="relative z-20 mb-3 flex items-center gap-3">
         <button
           onClick={() => navigate('/')}
           className="font-mono text-[11px] tracking-widest text-zinc-500 transition hover:text-zinc-200"
@@ -42,267 +29,353 @@ export default function SwissArmyKnife() {
         <span className="font-mono text-[11px] tracking-[0.3em] text-acid">{t('swiss.mono')}</span>
       </div>
 
-      {/* 主舞台：军刀居中 */}
-      <div className="relative z-10 flex flex-1 items-center justify-center">
-        <div className="relative flex aspect-square w-[min(92vw,560px)] items-center justify-center">
-          {/* === 辐射刀刃层 === */}
-          <AnimatePresence>
-            {expanded && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0"
-              >
-                {blades.map((b, i) => (
-                  <Blade
-                    key={b.id}
-                    blade={b}
-                    index={i}
-                    label={t(`swiss.tools.${b.id}.name`)}
-                    onTrigger={() => setActiveId(b.id)}
-                  />
-                ))}
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* === 中央徽章（枢轴） === */}
-          <HubBadge
-            expanded={expanded}
-            onClick={() => setExpanded((v) => !v)}
-          />
-        </div>
+      {/* 主舞台：终端窗口居中，直接展开列表 */}
+      <div className="relative z-10 flex flex-1 items-center justify-center py-2 md:py-4">
+        <Terminal setActiveId={setActiveId} />
       </div>
 
-      {/* 底部说明 */}
-      <div className="relative z-10 mt-2 text-center">
-        <AnimatePresence mode="wait">
-          {!expanded ? (
-            <motion.div
-              key="closed-hint"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-            >
-              <motion.button
-                onClick={() => setExpanded(true)}
-                whileHover={{ scale: 1.04 }}
-                whileTap={{ scale: 0.96 }}
-                className="font-display text-sm font-bold tracking-wide text-acid md:text-base"
-              >
-                {t('swiss.expand')} →
-              </motion.button>
-              <p className="mt-2 font-mono text-[10px] leading-relaxed text-zinc-600">
-                * {t('swiss.noteClosed').replace(/^\*\s*/, '')}
-              </p>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="open-hint"
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-            >
-              <div className="font-mono text-[10px] tracking-widest text-zinc-500">
-                {t('swiss.bladeCount').replace('{n}', TOOLS.length)} · {t('swiss.pickHint')}
-              </div>
-              <button
-                onClick={() => setExpanded(false)}
-                className="mt-2 font-mono text-[10px] tracking-widest text-zinc-600 underline-offset-4 transition hover:text-zinc-300 hover:underline"
-              >
-                {t('swiss.fold')}
-              </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* 触发态：全屏接管 */}
       <ToolOverlay activeId={activeId} onClose={() => setActiveId(null)} />
     </div>
   )
 }
 
-// === 中央徽章（枢轴） ===
-// 闭合时大；展开时缩小为中心刻度盘，始终可点击折叠
-function HubBadge({ expanded, onClick }) {
+// === 终端主组件 ===
+function Terminal({ setActiveId }) {
   const { t } = useI18n()
-  return (
-    <motion.button
-      onClick={onClick}
-      whileHover={{ scale: expanded ? 1.05 : 1.03 }}
-      whileTap={{ scale: 0.95 }}
-      animate={{
-        scale: expanded ? 0.42 : 1,
-      }}
-      transition={{ type: 'spring', stiffness: 220, damping: 22 }}
-      className="group relative z-20 flex aspect-square w-[42%] items-center justify-center rounded-full"
-      aria-label={expanded ? t('swiss.fold') : t('swiss.expand')}
-    >
-      {/* 呼吸光晕 */}
-      <motion.div
-        className="absolute inset-0 rounded-full bg-acid/25 blur-3xl"
-        animate={{ opacity: [0.35, 0.7, 0.35], scale: [0.95, 1.05, 0.95] }}
-        transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-      />
+  const [query, setQuery] = useState('')
+  const [selected, setSelected] = useState(0)
+  const listRef = useRef(null)
+  const inputRef = useRef(null)
 
-      {/* 金属盘体：径向渐变 + 多层描边模拟拉丝金属 */}
-      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_25%,#3a3a48,#15151c_70%)] shadow-[inset_0_2px_8px_rgba(255,255,255,0.15),inset_0_-4px_12px_rgba(0,0,0,0.6),0_20px_60px_-10px_rgba(0,0,0,0.8)]" />
-      {/* 外环刻度 */}
-      <svg className="absolute inset-[6%] animate-spin-slow" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="94" fill="none" stroke="rgba(212,255,58,0.18)" strokeWidth="1" />
-        <circle
-          cx="100"
-          cy="100"
-          r="94"
-          fill="none"
-          stroke="#d4ff3a"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeDasharray="10 580"
-        />
-        {Array.from({ length: 24 }).map((_, i) => (
-          <line
-            key={i}
-            x1="100"
-            y1="6"
-            x2="100"
-            y2={i % 6 === 0 ? '20' : '14'}
-            stroke="rgba(255,255,255,0.22)"
-            strokeWidth="1"
-            transform={`rotate(${i * 15} 100 100)`}
-          />
-        ))}
-      </svg>
-      {/* 内环反刻 */}
-      <svg className="absolute inset-[14%] animate-spin-rev" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(122,252,255,0.16)" strokeWidth="1" strokeDasharray="2 8" />
-      </svg>
+  // 筛选：支持 codename / id / 中文名 / 中文 tip 模糊匹配
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase().trim()
+    if (!q) return TOOLS
+    return TOOLS.filter((tool) => {
+      const name = String(t(`swiss.tools.${tool.id}.name`)).toLowerCase()
+      const tip = String(t(`swiss.tools.${tool.id}.tip`)).toLowerCase()
+      return (
+        tool.codename.toLowerCase().includes(q) ||
+        tool.id.includes(q) ||
+        name.includes(q) ||
+        tip.includes(q)
+      )
+    })
+  }, [query, t])
 
-      {/* 中央十字铆钉 + 铭文 */}
-      <div className="relative z-10 flex flex-col items-center">
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ type: 'spring', stiffness: 200, damping: 18 }}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-acid/40 bg-acid/10 font-mono text-lg"
-        >
-          {expanded ? '✕' : '🪓'}
-        </motion.div>
-        {!expanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="mt-3 text-center"
-          >
-            <div className="font-mono text-[8px] tracking-[0.3em] text-acid/70">{t('swiss.mono')}</div>
-            <div className="mt-1 font-mono text-[9px] tracking-widest text-zinc-500">
-              {TOOLS.length} {t('swiss.bladesUnit')}
-            </div>
-          </motion.div>
-        )}
-      </div>
-    </motion.button>
-  )
-}
+  // 筛选结果变化时，选中索引归零兜底
+  useEffect(() => {
+    setSelected((s) => (s >= filtered.length ? 0 : s))
+  }, [filtered.length])
 
-// === 单片刀刃 ===
-// 从中心向外辐射，闭合时收拢成束（angle 统一归 0），展开时 stagger 绽放
-function Blade({ blade, index, label, onTrigger }) {
-  const [hovered, setHovered] = useState(false)
+  // 进入即聚焦输入框，方便直接打字筛选
+  useEffect(() => {
+    const id = setTimeout(() => inputRef.current?.focus(), 400)
+    return () => clearTimeout(id)
+  }, [])
+
+  // 全局键盘导航：↑↓ 移动 / Enter 触发
+  useEffect(() => {
+    const onKey = (e) => {
+      // overlay 打开时让 ToolOverlay 自己处理 Esc
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setSelected((s) => Math.min(s + 1, filtered.length - 1))
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setSelected((s) => Math.max(s - 1, 0))
+      } else if (e.key === 'Enter') {
+        e.preventDefault()
+        if (filtered[selected]) setActiveId(filtered[selected].id)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [filtered, selected, setActiveId])
+
+  // 选中项滚入视口
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${selected}"]`)
+    el?.scrollIntoView({ block: 'nearest' })
+  }, [selected])
 
   return (
     <motion.div
-      className="absolute left-1/2 top-1/2 origin-bottom"
-      style={{ width: '2px', height: '50%' }}
-      initial={{ rotate: 0, opacity: 0 }}
-      animate={{ rotate: blade.angle, opacity: 1 }}
-      exit={{ rotate: 0, opacity: 0 }}
-      transition={{
-        type: 'spring',
-        stiffness: 180,
-        damping: 18,
-        delay: index * 0.022,
-      }}
+      initial={{ opacity: 0, y: 24, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: 'spring', stiffness: 240, damping: 26 }}
+      className="relative w-full max-w-3xl"
     >
-      {/* 刀刃本体：金属条 */}
-      <div
-        className="absolute bottom-[18%] left-1/2 h-[1px] w-1 -translate-x-1/2 rounded-full"
-        style={{
-          height: '62%',
-          width: hovered ? '4px' : '3px',
-          background: hovered
-            ? `linear-gradient(to top, ${blade.cat.hex}, rgba(255,255,255,0.4))`
-            : 'linear-gradient(to top, rgba(60,60,75,0.95), rgba(180,180,200,0.6))',
-          boxShadow: hovered ? `0 0 12px ${blade.cat.hex}80` : 'inset 0 1px 2px rgba(255,255,255,0.2)',
-          transition: 'width 0.2s, background 0.2s, box-shadow 0.2s',
-        }}
-      />
-
-      {/* 末端刀柄：工具图标按钮 */}
-      <motion.button
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={onTrigger}
-        whileHover={{ scale: 1.18 }}
-        whileTap={{ scale: 0.9 }}
-        className="absolute left-1/2 top-0 flex -translate-x-1/2 -translate-y-1/2 flex-col items-center"
-        style={{ filter: hovered ? `drop-shadow(0 0 10px ${blade.cat.hex})` : 'none' }}
-      >
-        <div
-          className="flex h-11 w-11 items-center justify-center rounded-full border text-xl backdrop-blur-sm transition md:h-12 md:w-12"
-          style={{
-            borderColor: hovered ? blade.cat.hex : 'rgba(255,255,255,0.18)',
-            background: hovered ? `${blade.cat.hex}1f` : 'rgba(10,10,15,0.85)',
-          }}
-        >
-          {blade.icon}
+      <div className="terminal-frame relative overflow-hidden rounded-xl border bg-[#080c08]/95 backdrop-blur-sm">
+        {/* 标题栏：macOS 三灯 + 标题 + REC 指示 */}
+        <div className="flex items-center gap-2 border-b border-acid/15 bg-[#0c120c] px-4 py-2.5">
+          <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+          <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+          <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+          <span className="ml-2 flex-1 truncate text-center font-mono text-[10px] tracking-widest text-zinc-500 md:text-[11px]">
+            useless@cyber: ~/arsenal — zsh
+          </span>
+          <span className="flex items-center gap-1 font-mono text-[9px] tracking-wider text-plasma/70 md:text-[10px]">
+            <motion.span
+              animate={{ opacity: [1, 0.3, 1] }}
+              transition={{ duration: 1.4, repeat: Infinity }}
+              className="inline-block h-1.5 w-1.5 rounded-full bg-plasma"
+            />
+            REC
+          </span>
         </div>
-        {/* 名字标签：hover 时才浮现，避免 20 个标签挤成一锅粥 */}
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4 }}
-              className="absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/10 bg-black/80 px-2 py-1 font-mono text-[10px] tracking-wide text-zinc-200"
-              style={{ color: blade.cat.hex }}
-            >
-              {label}
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.button>
+
+        {/* CRT 扫描线 + 渐晕 */}
+        <div className="pointer-events-none absolute inset-0 z-30 crt-effects" />
+
+        {/* 内容区 */}
+        <div className="relative z-20 font-mono text-[12px] leading-relaxed md:text-[13px]">
+          {/* 启动日志：作为顶部氛围装饰，不再是 gate */}
+          <BootLog />
+
+          {/* 状态栏 */}
+          <div className="flex items-center justify-between border-y border-acid/10 bg-[#0c120c] px-4 py-2 text-[10px] tracking-widest text-zinc-500 md:text-[11px]">
+            <span>ARSENAL // {TOOLS.length} WEAPONS LOADED</span>
+            <span className="hidden text-zinc-600 md:inline">SYS_STATUS: <span className="text-acid">ARMED</span></span>
+            <span>CONFIDENCE: <span className="text-plasma">0%</span></span>
+          </div>
+
+          {/* 筛选输入框 */}
+          <div className="flex items-center gap-2 border-b border-acid/10 px-4 py-3">
+            <span className="text-acid">{'>'}</span>
+            <span className="text-zinc-500">search:</span>
+            <input
+              ref={inputRef}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              spellCheck={false}
+              autoComplete="off"
+              className="flex-1 bg-transparent text-zinc-100 caret-acid outline-none placeholder:text-zinc-700"
+            />
+            <span className="cursor-blink text-acid">▊</span>
+            {query && (
+              <button
+                onClick={() => setQuery('')}
+                className="text-[10px] tracking-widest text-zinc-600 transition hover:text-plasma"
+              >
+                ✕ CLEAR
+              </button>
+            )}
+          </div>
+
+          {/* 命令列表：可滚动 */}
+          <div ref={listRef} className="max-h-[52vh] overflow-y-auto px-2 py-2">
+            {filtered.length === 0 ? (
+              <div className="px-4 py-8 text-center text-zinc-600">
+                <div className="text-[11px] tracking-widest">[NO MATCH]</div>
+                <div className="mt-2 text-[10px]">query "{query}" returned 0 useless results</div>
+              </div>
+            ) : (
+              filtered.map((tool, i) => (
+                <CommandRow
+                  key={tool.id}
+                  tool={tool}
+                  index={i}
+                  isSelected={i === selected}
+                  onSelect={() => setSelected(i)}
+                  onTrigger={() => setActiveId(tool.id)}
+                  name={t(`swiss.tools.${tool.id}.name`)}
+                  tip={t(`swiss.tools.${tool.id}.tip`)}
+                />
+              ))
+            )}
+          </div>
+
+          {/* 底部快捷键提示 */}
+          <div className="flex flex-wrap items-center justify-between gap-2 border-t border-acid/10 bg-[#0c120c] px-4 py-2 text-[9px] tracking-widest text-zinc-600 md:text-[10px]">
+            <span className="flex flex-wrap gap-3">
+              <span><kbd className="text-acid">↑↓</kbd> NAVIGATE</span>
+              <span><kbd className="text-acid">ENTER</kbd> FIRE</span>
+              <span><kbd className="text-acid">TYPE</kbd> FILTER</span>
+            </span>
+            <span>{filtered.length}/{TOOLS.length}</span>
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        .terminal-frame {
+          border-color: rgba(212,255,58,0.28);
+          box-shadow:
+            0 0 60px -10px rgba(212,255,58,0.30),
+            0 30px 80px -20px rgba(0,0,0,0.9),
+            inset 0 0 40px rgba(0,0,0,0.4);
+        }
+        .crt-effects {
+          background:
+            repeating-linear-gradient(
+              to bottom,
+              transparent 0,
+              transparent 2px,
+              rgba(0,0,0,0.18) 2px,
+              rgba(0,0,0,0.18) 3px
+            );
+          opacity: 0.45;
+        }
+        .crt-effects::after {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+          pointer-events: none;
+        }
+        @keyframes blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+        .cursor-blink { animation: blink 1s step-end infinite; }
+        @keyframes glitch-skew {
+          0%, 100% { transform: skewX(0); }
+          92% { transform: skewX(0); }
+          94% { transform: skewX(-1.5deg); }
+          96% { transform: skewX(1deg); }
+          98% { transform: skewX(0); }
+        }
+        .terminal-frame { animation: glitch-skew 6s infinite; }
+      `}</style>
     </motion.div>
   )
 }
 
-// 背景光晕：闭合时 acid 主导，展开后三色交融
-function BladeGlow({ expanded }) {
+// === 启动日志（顶部氛围装饰） ===
+function BootLog() {
+  const { t } = useI18n()
+  const lines = [
+    { tag: 'OK', color: 'text-acid', text: 'booting useless-arsenal v0.0.1' },
+    { tag: 'OK', color: 'text-acid', text: `loading ${TOOLS.length} weapons ........... armed` },
+    { tag: 'WARN', color: 'text-yellow-400', text: 'productivity_module: not found, skipping' },
+    { tag: 'OK', color: 'text-acid', text: 'useless_core: READY' },
+  ]
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+    <div className="px-4 pt-4 pb-3 md:px-6">
+      {lines.map((ln, i) => (
+        <motion.div
+          key={i}
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.1 + i * 0.12 }}
+          className="flex gap-2"
+        >
+          <span className="text-zinc-600">[{formatLogTime(i)}]</span>
+          <span className={ln.color}>[{ln.tag}]</span>
+          <span className="text-zinc-300">{ln.text}</span>
+        </motion.div>
+      ))}
+      {/* 命令行欢迎语 */}
       <motion.div
-        className="absolute left-1/2 top-1/2 h-[36rem] w-[36rem] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[130px]"
-        animate={{
-          backgroundColor: expanded ? 'rgba(212,255,58,0.10)' : 'rgba(212,255,58,0.18)',
-        }}
-        transition={{ duration: 0.6 }}
-      />
-      {expanded && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute left-[20%] top-[30%] h-72 w-72 rounded-full bg-plasma/10 blur-[120px]"
-          />
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="absolute bottom-[15%] right-[18%] h-72 w-72 rounded-full bg-frost/10 blur-[120px]"
-          />
-        </>
-      )}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 + lines.length * 0.12 + 0.1 }}
+        className="mt-3 flex flex-wrap items-center gap-2"
+      >
+        <span className="text-acid">user@cyber</span>
+        <span className="text-zinc-500">:</span>
+        <span className="text-frost">~/arsenal</span>
+        <span className="text-zinc-500">$</span>
+        <span className="text-zinc-300">list-weapons --all</span>
+        <span className="cursor-blink text-acid">▊</span>
+      </motion.div>
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 + lines.length * 0.12 + 0.3 }}
+        className="mt-3 text-[10px] leading-relaxed text-zinc-600 md:text-[11px]"
+      >
+        * {t('swiss.note').replace(/^\*\s*/, '')}
+      </motion.p>
     </div>
   )
+}
+
+// === 单条命令行 ===
+function CommandRow({ tool, index, isSelected, onSelect, onTrigger, name, tip }) {
+  const cat = CATEGORY[tool.cat]
+  return (
+    <motion.button
+      data-idx={index}
+      onClick={onTrigger}
+      onMouseEnter={onSelect}
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 + index * 0.025 }}
+      whileHover={{ x: 2 }}
+      whileTap={{ scale: 0.995 }}
+      className={`group relative flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-left transition ${
+        isSelected ? 'bg-acid/[0.08]' : 'hover:bg-white/[0.02]'
+      }`}
+      style={isSelected ? { boxShadow: `inset 2px 0 0 ${cat.hex}` } : undefined}
+    >
+      {/* 选中光标 */}
+      <span
+        className={`w-3 shrink-0 text-center font-bold transition ${
+          isSelected ? 'opacity-100' : 'opacity-0'
+        }`}
+        style={{ color: cat.hex }}
+      >
+        ▌
+      </span>
+
+      {/* 图标 */}
+      <span className="shrink-0 text-base md:text-lg">{tool.icon}</span>
+
+      {/* 命令名 .exe */}
+      <span
+        className={`shrink-0 font-bold transition md:text-[13px] ${
+          isSelected ? 'text-acid' : 'text-zinc-300 group-hover:text-zinc-100'
+        }`}
+      >
+        {tool.id}.exe
+      </span>
+
+      {/* codename 军事化标签 */}
+      <span
+        className="hidden shrink-0 rounded px-1.5 py-0.5 text-[9px] font-bold tracking-widest md:inline-block md:text-[10px]"
+        style={{
+          color: cat.hex,
+          border: `1px solid ${cat.hex}40`,
+          background: `${cat.hex}10`,
+        }}
+      >
+        {tool.codename}
+      </span>
+
+      <span className="flex-1" />
+
+      {/* 中文名 + tip */}
+      <span className="hidden shrink-0 text-[11px] text-zinc-500 md:inline md:text-[12px]">{name}</span>
+      <span className="shrink-0 text-[10px] text-zinc-600 md:text-[11px]">·</span>
+      <span className="hidden shrink-0 text-[10px] text-zinc-600 md:inline md:text-[11px]">{tip}</span>
+
+      {/* 移动端：只显示中文名 */}
+      <span className="shrink-0 text-[11px] text-zinc-400 md:hidden">{name}</span>
+    </motion.button>
+  )
+}
+
+// 背景光晕 + 网格
+function BackgroundFX() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-[0.04]"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(212,255,58,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(212,255,58,0.5) 1px, transparent 1px)',
+          backgroundSize: '48px 48px',
+        }}
+      />
+      <div className="absolute left-1/2 top-1/2 h-[32rem] w-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-acid/[0.08] blur-[140px]" />
+      <div className="absolute left-[10%] top-[15%] h-64 w-64 rounded-full bg-frost/[0.05] blur-[120px]" />
+      <div className="absolute bottom-[10%] right-[12%] h-64 w-64 rounded-full bg-plasma/[0.05] blur-[120px]" />
+    </div>
+  )
+}
+
+// 启动日志的伪时间戳
+function formatLogTime(i) {
+  const base = new Date()
+  base.setSeconds(base.getSeconds() - (4 - i))
+  return base.toLocaleTimeString('en-US', { hour12: false })
 }
