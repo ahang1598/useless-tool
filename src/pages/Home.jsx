@@ -106,7 +106,8 @@ export default function Home() {
             </div>
           </motion.div>
 
-          {/* 次级按钮：AI 智能检测，幽灵样式保持主按钮层级 */}
+          {/* 次级按钮组：AI 智能检测 + 赛博瑞士军刀 */}
+          <div className="mt-3 flex flex-col gap-3 md:flex-row">
           <motion.button
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -126,6 +127,27 @@ export default function Home() {
             </div>
             <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-frost/15 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
           </motion.button>
+
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            onClick={() => navigate('/swiss-army')}
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.97 }}
+            className="group relative flex items-center gap-3 overflow-hidden rounded-full border border-acid/40 bg-acid/[0.06] px-6 py-4 text-zinc-100 backdrop-blur-sm md:px-7 md:py-5"
+          >
+            <span className="relative flex h-8 w-8 items-center justify-center md:h-10 md:w-10">
+              <span className="absolute inset-0 animate-pulse-glow rounded-full bg-acid/30 blur-md" />
+              <span className="relative font-mono text-sm md:text-base">🪓</span>
+            </span>
+            <div className="text-left">
+              <div className="font-display text-base font-bold leading-none md:text-lg">{t('swiss.title1')}{t('swiss.title2')}</div>
+              <div className="mt-1 font-mono text-[10px] tracking-widest text-acid/70">{t('swiss.mono')}</div>
+            </div>
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-acid/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          </motion.button>
+          </div>
         </div>
 
         <motion.div

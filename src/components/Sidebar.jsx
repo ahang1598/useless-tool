@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/index.jsx'
 const CATEGORIES = [
   { id: 'time-machine', code: 'Time Machine', to: '/time-machine', enabled: true },
   { id: 'discipline', code: 'Discipline', to: '/discipline', enabled: true },
+  { id: 'swiss', code: 'Swiss Knife', to: '/swiss-army', enabled: true },
   { id: 'phantom', code: 'Schrödinger', enabled: false },
   { id: 'echo', code: 'Echo Wall', enabled: false },
   { id: 'void', code: 'Black Hole', enabled: false },
