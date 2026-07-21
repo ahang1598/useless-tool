@@ -114,7 +114,7 @@ export default function TimeMachine() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0, scale: 0.98 }}
-            className="relative flex min-h-[100svh] flex-col px-6 pb-6 pt-[4.5rem] md:min-h-0 md:flex-1 md:items-start md:gap-8 md:px-14 md:pt-20"
+            className="relative flex min-h-[100svh] flex-col items-center px-6 pb-6 pt-[4.5rem] md:min-h-0 md:flex-1 md:justify-center md:gap-8 md:px-14 md:pt-14"
           >
             {/* 漂浮时间符号背景 */}
             <FloatingSymbols />
@@ -131,7 +131,7 @@ export default function TimeMachine() {
             </div>
 
             {/* 核心内容区：始终单列堆叠 */}
-            <div className="relative z-10 flex flex-1 flex-col justify-center md:block md:flex-none">
+            <div className="relative z-10 flex w-full max-w-2xl flex-1 flex-col justify-center md:block md:flex-none">
               {/* 标题 */}
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}

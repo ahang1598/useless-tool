@@ -69,13 +69,23 @@ export default function Sidebar() {
           <div className={`hidden md:flex h-10 w-10 items-center justify-center rounded-lg border border-acid/30 font-display text-lg font-bold text-acid ${collapsed ? 'flex' : 'hidden'}`}>
             U
           </div>
-          {/* PC 端折叠按钮 */}
+          {/* PC 端折叠按钮：加大尺寸 + 醒目样式 */}
           <button
             onClick={() => setCollapsed((v) => !v)}
             aria-label="Toggle sidebar"
-            className="hidden md:flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-white/10 text-zinc-400 transition hover:border-acid/50 hover:text-acid"
+            className="group hidden md:flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-acid/10 text-acid transition hover:bg-acid hover:text-void"
           >
-            <span className={`transition-transform ${collapsed ? '' : 'rotate-180'}`}>‹</span>
+            <svg
+              className={`h-4 w-4 transition-transform duration-300 ${collapsed ? '' : 'rotate-180'}`}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
           </button>
         </div>
 
