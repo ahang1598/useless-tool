@@ -81,3 +81,15 @@ input[type='range']::-moz-range-thumb {
   border: 2px solid #d4ff3a;
   box-shadow: 0 0 0 4px rgba(212, 255, 58, 0.15);
 }
+
+/* === 时空碎片彩蛋：临时特效（作用域 main 内容区）=== */
+.egg-fx-screen-shake {
+  animation: shake 0.4s ease-in-out infinite;
+}
+.egg-fx-tilt-world {
+  animation: egg-tilt 4s ease-in-out infinite;
+}
+@keyframes egg-tilt {
+  0%, 100% { transform: rotate(-2.5deg); }
+  50% { transform: rotate(2.5deg); }
+}

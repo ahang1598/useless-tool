@@ -296,6 +296,22 @@ const ZH = {
       firewall: { name: '水逆退散防火墙', tip: '仅本页生效' },
     },
   },
+  // === 时空碎片彩蛋 ===
+  egg: {
+    hint: '↓ 发现我',
+    found: '已回收',
+    toastTitle: '时空碎片已回收',
+    toastSub: '时空隧道漏了一块出来，被你捡到了。',
+    reward: '奖励',
+    toastDur: '持续 4 秒',
+    effects: {
+      'rainbow-trail': '彩虹拖尾',
+      'screen-shake': '时空余震',
+      'color-noise': '色彩噪点',
+      'tilt-world': '世界倾斜',
+      'bubble-pop': '边缘气泡',
+    },
+  },
 }
 
 // 英文字典
@@ -582,6 +598,22 @@ const EN = {
       extract: { name: 'Negativity Extractor', tip: 'drain the emo' },
       charge: { name: 'Mental Battery Charger', tip: 'fast-comfort' },
       firewall: { name: 'Mercury-Retrograde Firewall', tip: 'in-page only' },
+    },
+  },
+  // === Spacetime Shard easter egg ===
+  egg: {
+    hint: '↓ found me',
+    found: 'recovered',
+    toastTitle: 'Spacetime shard recovered',
+    toastSub: 'A piece fell out of the tunnel. You grabbed it.',
+    reward: 'reward',
+    toastDur: 'lasts 4s',
+    effects: {
+      'rainbow-trail': 'Rainbow Trail',
+      'screen-shake': 'Spacetime Quake',
+      'color-noise': 'Chroma Static',
+      'tilt-world': 'Tilted Reality',
+      'bubble-pop': 'Edge Bubbles',
     },
   },
 }

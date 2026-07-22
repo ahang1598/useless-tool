@@ -22,6 +22,10 @@ export default {
         'drift': 'drift 18s ease-in-out infinite',
         'aura-pulse': 'aura-pulse 3s ease-in-out infinite',
         'float-y': 'float-y 6s ease-in-out infinite',
+        // 彩蛋特效用
+        'shake': 'shake 0.4s ease-in-out infinite',
+        'bubble-rise': 'bubble-rise 4s linear infinite',
+        'chroma-flicker': 'chroma-flicker 0.15s steps(2) infinite',
       },
       keyframes: {
         'spin-rev': {
@@ -44,6 +48,25 @@ export default {
         'float-y': {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-10px)' },
+        },
+        // 屏幕抖动（时空余震）
+        'shake': {
+          '0%, 100%': { transform: 'translate(0,0) rotate(0)' },
+          '20%': { transform: 'translate(-3px, 2px) rotate(-0.3deg)' },
+          '40%': { transform: 'translate(3px, -2px) rotate(0.3deg)' },
+          '60%': { transform: 'translate(-2px, -3px) rotate(-0.2deg)' },
+          '80%': { transform: 'translate(2px, 3px) rotate(0.2deg)' },
+        },
+        // 气泡上升
+        'bubble-rise': {
+          '0%': { transform: 'translateY(0) scale(0.6)', opacity: '0' },
+          '15%': { opacity: '0.9' },
+          '100%': { transform: 'translateY(-105vh) scale(1.1)', opacity: '0' },
+        },
+        // 色彩噪点闪烁
+        'chroma-flicker': {
+          '0%, 100%': { opacity: '0.03' },
+          '50%': { opacity: '0.12' },
         },
       },
     },

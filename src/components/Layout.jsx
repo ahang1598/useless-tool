@@ -1,13 +1,14 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Sidebar from './Sidebar.jsx'
+import EasterEgg from './EasterEgg/index.jsx'
 
 export default function Layout() {
   const location = useLocation()
   return (
     <div className="noise relative flex min-h-screen w-full bg-void text-zinc-100">
       <Sidebar />
-      <main className="relative flex min-h-screen flex-1 flex-col overflow-hidden">
+      <main id="egg-target" className="relative flex min-h-screen flex-1 flex-col overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={location.pathname}
@@ -21,6 +22,8 @@ export default function Layout() {
           </motion.div>
         </AnimatePresence>
       </main>
+      {/* 时空碎片彩蛋：跨页面随机投放 */}
+      <EasterEgg />
     </div>
   )
 }
